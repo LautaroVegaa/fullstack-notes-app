@@ -277,3 +277,128 @@ h1 {
     flex-direction: column;
   }
 }
+
+/* View mode selector */
+.view-mode-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.view-mode-selector button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: rgba(30, 30, 30, 0.8);
+  color: #cbd5e0;
+  border: 1px solid #2d3748;
+}
+
+.view-mode-selector button:hover {
+  background: rgba(45, 45, 45, 0.9);
+  border-color: #667eea;
+}
+
+.view-mode-selector button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+/* Edit mode styles */
+.note-edit-mode {
+  width: 100%;
+}
+
+.edit-title {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.9);
+  color: #e8e8e8;
+  font-size: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.edit-title:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.edit-content {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.9);
+  color: #e8e8e8;
+  font-size: 14px;
+  min-height: 100px;
+  resize: vertical;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.edit-content:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.save-edit {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.save-edit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.cancel-edit {
+  background: rgba(30, 30, 30, 0.8);
+  color: #cbd5e0;
+  padding: 8px 16px;
+  border: 1px solid #2d3748;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancel-edit:hover {
+  background: rgba(45, 45, 45, 0.9);
+  border-color: #667eea;
+}
+
+/* Edit button in note actions */
+.note-actions button.edit {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.note-actions button.edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}

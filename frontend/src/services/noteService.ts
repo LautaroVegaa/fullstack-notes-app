@@ -37,6 +37,32 @@ export class NoteService {
   }
 
   /**
+   * Fetch only active (non-archived) notes
+   * @returns Promise<Note[]> Array of active notes
+   * @throws Error if the request fails
+   */
+  static async getActiveNotes(): Promise<Note[]> {
+    const response = await fetch(`${API_BASE_URL}/notes?archived=false`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch active notes');
+    }
+    return response.json();
+  }
+
+  /**
+   * Fetch only archived notes
+   * @returns Promise<Note[]> Array of archived notes
+   * @throws Error if the request fails
+   */
+  static async getArchivedNotes(): Promise<Note[]> {
+    const response = await fetch(`${API_BASE_URL}/notes?archived=true`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch archived notes');
+    }
+    return response.json();
+  }
+
+  /**
    * Create a new note
    * @param noteData Object containing title and content
    * @returns Promise<Note> The created note with server-generated fields
