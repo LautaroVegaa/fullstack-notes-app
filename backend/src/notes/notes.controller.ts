@@ -38,5 +38,15 @@ import {
     toggleArchive(@Param('id') id: string) {
       return this.notesService.toggleArchive(+id);
     }
+
+    @Get('active')
+    findActive(): Promise<Note[]> {
+      return this.notesService.findActive();
+    }
+
+    @Get('archived')
+    findArchived(): Promise<Note[]> {
+      return this.notesService.findArchived();
+    }
   }
   

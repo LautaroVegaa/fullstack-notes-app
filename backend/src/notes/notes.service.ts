@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Note } from './note.entity';
@@ -33,9 +33,16 @@ export class NotesService {
 
   async toggleArchive(id: number): Promise<Note> {
     const note = await this.noteRepository.findOneBy({ id });
-    if (!note) throw new Error('Note not found');
+    if (!note) throw new NotFoundException('Note not found');
     note.archived = !note.archived;
     return this.noteRepository.save(note);
   }
   
+  async findActive(): Promise<Note[]> {
+    return this.noteRepository.find({ where: { archived: false }, order: { createdAt: 'DESC' } });
+  }
+
+  async findArchived(): Promise<Note[]> {
+    return this.noteRepository.find({ where: { archived: true }, order: { createdAt: 'DESC' } });
+  }
 }
