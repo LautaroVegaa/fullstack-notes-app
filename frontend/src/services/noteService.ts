@@ -1,15 +1,33 @@
+/**
+ * Interface representing a note in the application
+ * Matches the backend Note entity structure
+ */
 export interface Note {
+  /** Unique identifier for the note */
   id: number;
+  /** Title of the note */
   title: string;
+  /** Content/body of the note */
   content: string;
+  /** Whether the note is archived or not */
   archived: boolean;
+  /** ISO string timestamp when the note was created */
   createdAt: string;
 }
 
+/** Base URL for the backend API */
 const API_BASE_URL = 'http://localhost:3000';
 
+/**
+ * Service class for handling API communication with the backend
+ * Provides methods for all CRUD operations and note management
+ */
 export class NoteService {
-  // Obtener todas las notas
+  /**
+   * Fetch all notes from the backend
+   * @returns Promise<Note[]> Array of all notes
+   * @throws Error if the request fails
+   */
   static async getAllNotes(): Promise<Note[]> {
     const response = await fetch(`${API_BASE_URL}/notes`);
     if (!response.ok) {
@@ -18,25 +36,12 @@ export class NoteService {
     return response.json();
   }
 
-  // Obtener notas activas
-  static async getActiveNotes(): Promise<Note[]> {
-    const response = await fetch(`${API_BASE_URL}/notes/active`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch active notes');
-    }
-    return response.json();
-  }
-
-  // Obtener notas archivadas
-  static async getArchivedNotes(): Promise<Note[]> {
-    const response = await fetch(`${API_BASE_URL}/notes/archived`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch archived notes');
-    }
-    return response.json();
-  }
-
-  // Crear una nueva nota
+  /**
+   * Create a new note
+   * @param noteData Object containing title and content
+   * @returns Promise<Note> The created note with server-generated fields
+   * @throws Error if the request fails
+   */
   static async createNote(noteData: { title: string; content: string }): Promise<Note> {
     const response = await fetch(`${API_BASE_URL}/notes`, {
       method: 'POST',
@@ -51,7 +56,13 @@ export class NoteService {
     return response.json();
   }
 
-  // Actualizar una nota
+  /**
+   * Update an existing note
+   * @param id Note ID to update
+   * @param noteData Object containing updated title and content
+   * @returns Promise<Note> The updated note
+   * @throws Error if the request fails
+   */
   static async updateNote(id: number, noteData: { title: string; content: string }): Promise<Note> {
     const response = await fetch(`${API_BASE_URL}/notes/${id}`, {
       method: 'PUT',
@@ -66,7 +77,12 @@ export class NoteService {
     return response.json();
   }
 
-  // Eliminar una nota
+  /**
+   * Delete a note by ID
+   * @param id Note ID to delete
+   * @returns Promise<void>
+   * @throws Error if the request fails
+   */
   static async deleteNote(id: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/notes/${id}`, {
       method: 'DELETE',
@@ -76,7 +92,12 @@ export class NoteService {
     }
   }
 
-  // Archivar/desarchivar una nota
+  /**
+   * Toggle the archive status of a note
+   * @param id Note ID to toggle archive status
+   * @returns Promise<Note> The note with updated archive status
+   * @throws Error if the request fails
+   */
   static async toggleArchive(id: number): Promise<Note> {
     const response = await fetch(`${API_BASE_URL}/notes/${id}/archive`, {
       method: 'PUT',

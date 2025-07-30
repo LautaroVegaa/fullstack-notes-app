@@ -3,17 +3,25 @@ import { NoteService } from './services/noteService'
 import type { Note } from './services/noteService'
 import './App.css'
 
+/**
+ * Main application component for the Notes App
+ * Handles all note operations including CRUD and archiving
+ */
 function App() {
+  // State for managing notes and UI
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newNote, setNewNote] = useState({ title: '', content: '' })
 
-  // Cargar notas al montar el componente
+  // Load notes when component mounts
   useEffect(() => {
     loadNotes()
   }, [])
 
+  /**
+   * Load all notes from the backend
+   */
   const loadNotes = async () => {
     try {
       setLoading(true)
@@ -28,6 +36,10 @@ function App() {
     }
   }
 
+  /**
+   * Handle form submission for creating a new note
+   * @param e Form submission event
+   */
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newNote.title.trim() || !newNote.content.trim()) return
@@ -43,6 +55,10 @@ function App() {
     }
   }
 
+  /**
+   * Toggle archive status of a note
+   * @param id Note ID to toggle archive status
+   */
   const handleToggleArchive = async (id: number) => {
     try {
       const updatedNote = await NoteService.toggleArchive(id)
@@ -54,6 +70,10 @@ function App() {
     }
   }
 
+  /**
+   * Delete a note by ID
+   * @param id Note ID to delete
+   */
   const handleDeleteNote = async (id: number) => {
     try {
       await NoteService.deleteNote(id)
@@ -65,6 +85,7 @@ function App() {
     }
   }
 
+  // Show loading state
   if (loading) {
     return <div className="app">Cargando notas...</div>
   }
@@ -73,9 +94,10 @@ function App() {
     <div className="app">
       <h1>App de Notas</h1>
       
+      {/* Error message display */}
       {error && <div className="error">{error}</div>}
 
-      {/* Formulario para crear nota */}
+      {/* Note creation form */}
       <form onSubmit={handleCreateNote} className="note-form">
         <h2>Crear Nueva Nota</h2>
         <input
@@ -94,7 +116,7 @@ function App() {
         <button type="submit">Crear Nota</button>
       </form>
 
-      {/* Lista de notas */}
+      {/* Notes list section */}
       <div className="notes-section">
         <h2>Notas ({notes.length})</h2>
         {notes.length === 0 ? (
@@ -105,11 +127,13 @@ function App() {
               <div key={note.id} className={`note ${note.archived ? 'archived' : ''}`}>
                 <h3>{note.title}</h3>
                 <p>{note.content}</p>
+                {/* Note metadata */}
                 <div className="note-meta">
                   <span>ID: {note.id}</span>
                   <span>Archivada: {note.archived ? 'Sí' : 'No'}</span>
                   <span>Creada: {new Date(note.createdAt).toLocaleDateString()}</span>
                 </div>
+                {/* Note action buttons */}
                 <div className="note-actions">
                   <button onClick={() => handleToggleArchive(note.id)}>
                     {note.archived ? 'Desarchivar' : 'Archivar'}
