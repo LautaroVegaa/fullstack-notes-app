@@ -1,4 +1,15 @@
 /**
+ * Interface representing a category in the application
+ * Matches the backend Category entity structure
+ */
+export interface Category {
+  /** Unique identifier for the category */
+  id: number;
+  /** Name of the category */
+  name: string;
+}
+
+/**
  * Interface representing a note in the application
  * Matches the backend Note entity structure
  */
@@ -13,6 +24,8 @@ export interface Note {
   archived: boolean;
   /** ISO string timestamp when the note was created */
   createdAt: string;
+  /** Categories associated with this note */
+  categories?: Category[];
 }
 
 /** Base URL for the backend API */
@@ -130,6 +143,78 @@ export class NoteService {
     });
     if (!response.ok) {
       throw new Error('Failed to toggle archive');
+    }
+    return response.json();
+  }
+
+  // ===== CATEGORY METHODS =====
+
+  /**
+   * Fetch all categories from the backend
+   * @returns Promise<Category[]> Array of all categories
+   * @throws Error if the request fails
+   */
+  static async getAllCategories(): Promise<Category[]> {
+    const response = await fetch(`${API_BASE_URL}/notes/category`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch categories');
+    }
+    return response.json();
+  }
+
+  /**
+   * Fetch notes filtered by category
+   * @param categoryName Name of the category to filter by
+   * @param archived Optional archived status filter
+   * @returns Promise<Note[]> Array of filtered notes
+   * @throws Error if the request fails
+   */
+  static async getNotesByCategory(categoryName: string, archived?: boolean): Promise<Note[]> {
+    let url = `${API_BASE_URL}/notes?category=${encodeURIComponent(categoryName)}`;
+    if (archived !== undefined) {
+      url += `&archived=${archived}`;
+    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch notes by category');
+    }
+    return response.json();
+  }
+
+  /**
+   * Assign a category to a note
+   * @param noteId Note ID
+   * @param categoryId Category ID to assign
+   * @returns Promise<Note> The note with updated categories
+   * @throws Error if the request fails
+   */
+  static async assignCategoryToNote(noteId: number, categoryId: number): Promise<Note> {
+    const response = await fetch(`${API_BASE_URL}/notes/${noteId}/category`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ categoryId }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to assign category to note');
+    }
+    return response.json();
+  }
+
+  /**
+   * Remove a category from a note
+   * @param noteId Note ID
+   * @param categoryId Category ID to remove
+   * @returns Promise<Note> The note with updated categories
+   * @throws Error if the request fails
+   */
+  static async removeCategoryFromNote(noteId: number, categoryId: number): Promise<Note> {
+    const response = await fetch(`${API_BASE_URL}/notes/${noteId}/category/${categoryId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to remove category from note');
     }
     return response.json();
   }
