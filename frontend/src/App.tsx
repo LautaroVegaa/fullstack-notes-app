@@ -92,9 +92,11 @@ function App() {
       // Assign categories if any are selected
       if (selectedCategoriesForNote.length > 0) {
         await handleAssignCategories(createdNote.id, selectedCategoriesForNote)
+        // The note will be added to the list in handleAssignCategories
       } else {
-        // Reload notes to show the new one
-        await loadNotes()
+        // Add the new note to the current list without reloading
+        const noteWithCategories = { ...createdNote, categories: [] }
+        setNotes(prevNotes => [...prevNotes, noteWithCategories])
       }
     } catch (err) {
       setError('Error al crear la nota')
@@ -128,19 +130,29 @@ function App() {
     if (!editingNote || !editForm.title.trim() || !editForm.content.trim()) return
 
     try {
-      await NoteService.updateNote(editingNote.id, editForm)
-      
+      const updatedNote = await NoteService.updateNote(editingNote.id, editForm)
+    setNotes(prevNotes =>
+      prevNotes.map(n =>
+        n.id === editingNote.id ? { ...n, ...editForm } : n
+      )
+    );
       // Update categories if any are selected
       if (selectedCategoriesForNote.length > 0) {
         await handleAssignCategories(editingNote.id, selectedCategoriesForNote)
       }
+      // Update the note in the local state
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === editingNote.id 
+            ? { ...updatedNote, categories: note.categories } 
+            : note
+        )
+      )
       
       setEditingNote(null)
       setEditForm({ title: '', content: '' })
       setSelectedCategoriesForNote([])
       setError(null)
-      // Reload notes to show the updated one
-      await loadNotes()
     } catch (err) {
       setError('Error al actualizar la nota')
       console.error(err)
@@ -149,18 +161,35 @@ function App() {
 
   /**
    * Toggle archive status of a note
-   * @param id Note ID to toggle archive status
-   */
+   * /**
+ * Toggle archive status of a note
+ * @param id Note ID to toggle archive status
+ */
   const handleToggleArchive = async (id: number) => {
     try {
-      await NoteService.toggleArchive(id)
+      const updatedNote = await NoteService.toggleArchive(id)
       setError(null)
-      await loadNotes() //  Refresh the list so that the note moves from active to archived or vice versa
+  
+      // Si el estado de archivado cambia, filtramos esa nota de la lista
+      setNotes(prevNotes =>
+        prevNotes.filter(note => note.id !== id)
+      )
+  
+      // Si la nota debería mostrarse en el nuevo viewMode, la agregamos
+      if (
+        (updatedNote.archived && viewMode === 'archived') ||
+        (!updatedNote.archived && viewMode === 'active')
+      ) {
+        setNotes(prevNotes => [...prevNotes, updatedNote])
+      }
+  
     } catch (err) {
       setError('Error al archivar/desarchivar la nota')
       console.error(err)
     }
   }
+  
+
   
 
   /**
@@ -171,8 +200,9 @@ function App() {
     try {
       await NoteService.deleteNote(id)
       setError(null)
-      // Reload notes to remove the deleted one
-      await loadNotes()
+      
+      // Remove the note from the local state
+      setNotes(prevNotes => prevNotes.filter(note => note.id !== id))
     } catch (err) {
       setError('Error al eliminar la nota')
       console.error(err)
@@ -230,8 +260,26 @@ function App() {
         await NoteService.removeCategoryFromNote(noteId, categoryId)
       }
       
-      // Reload notes to show updated categories
-      await loadNotes()
+      // Update the note in the local state with new categories
+      const selectedCategories = categories.filter(cat => categoryIds.includes(cat.id))
+      
+      if (currentNote) {
+        // Update existing note
+        setNotes(prevNotes => 
+          prevNotes.map(note => 
+            note.id === noteId 
+              ? { ...note, categories: selectedCategories }
+              : note
+          )
+        )
+      } else {
+        // Add new note with categories (for newly created notes)
+        const newNote = await NoteService.getAllNotes().then(notes => notes.find(note => note.id === noteId))
+        if (newNote) {
+          setNotes(prevNotes => [...prevNotes, { ...newNote, categories: selectedCategories }])
+        }
+      }
+      
       setError(null)
     } catch (err) {
       setError('Error al actualizar las categorías de la nota')
@@ -247,7 +295,19 @@ function App() {
   const handleRemoveCategoryFromNote = async (noteId: number, categoryId: number) => {
     try {
       await NoteService.removeCategoryFromNote(noteId, categoryId)
-      await loadNotes() // Reload to show updated note
+      
+      // Update the note in the local state by removing the category
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === noteId 
+            ? { 
+                ...note, 
+                categories: note.categories?.filter(cat => cat.id !== categoryId) || []
+              }
+            : note
+        )
+      )
+      
       setError(null)
     } catch (err) {
       setError('Error al quitar la categoría de la nota')
