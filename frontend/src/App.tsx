@@ -11,136 +11,96 @@ import './App.css'
  * Handles all note operations including CRUD and archiving
  */
 function App() {
-  // State for managing notes and UI
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newNote, setNewNote] = useState({ title: '', content: '' })
-  
-  // State for note editing
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [editForm, setEditForm] = useState({ title: '', content: '' })
-  
-  // State for view mode (active/archived)
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active')
-  
-  // State for categories
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedCategoriesForNote, setSelectedCategoriesForNote] = useState<number[]>([])
 
-  // Load notes when component mounts
   useEffect(() => {
     loadNotes()
     loadCategories()
   }, [viewMode, selectedCategory])
 
-  /**
-   * Load notes based on current view mode and selected category
-   */
   const loadNotes = async () => {
     try {
       setLoading(true)
       let notesData: Note[]
-      
       if (selectedCategory) {
-        // Filter by category and archived status
         notesData = await NoteService.getNotesByCategory(selectedCategory, viewMode === 'archived')
       } else {
-        // Load all notes based on archived status
         notesData = viewMode === 'active' 
           ? await NoteService.getActiveNotes()
           : await NoteService.getArchivedNotes()
       }
-      
       setNotes(notesData)
       setError(null)
     } catch (err) {
-      setError('Error al cargar las notas')
+      setError('Failed to load notes')
       console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  /**
-   * Load all categories from the backend
-   */
   const loadCategories = async () => {
     try {
       const categoriesData = await NoteService.getAllCategories()
       setCategories(categoriesData)
     } catch (err) {
-      console.error('Error al cargar las categorías:', err)
+      console.error('Failed to load categories:', err)
     }
   }
 
-  /**
-   * Handle form submission for creating a new note
-   * @param e Form submission event
-   */
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newNote.title.trim() || !newNote.content.trim()) return
-
     try {
       const createdNote = await NoteService.createNote(newNote)
       setNewNote({ title: '', content: '' })
       setSelectedCategoriesForNote([])
       setError(null)
-      
-      // Assign categories if any are selected
       if (selectedCategoriesForNote.length > 0) {
         await handleAssignCategories(createdNote.id, selectedCategoriesForNote)
-        // The note will be added to the list in handleAssignCategories
       } else {
-        // Add the new note to the current list without reloading
         const noteWithCategories = { ...createdNote, categories: [] }
         setNotes(prevNotes => [...prevNotes, noteWithCategories])
       }
     } catch (err) {
-      setError('Error al crear la nota')
+      setError('Failed to create note')
       console.error(err)
     }
   }
 
-  /**
-   * Start editing a note
-   * @param note Note to edit
-   */
   const handleStartEdit = (note: Note) => {
     setEditingNote(note)
     setEditForm({ title: note.title, content: note.content })
     setSelectedCategoriesForNote(note.categories?.map(cat => cat.id) || [])
   }
 
-  /**
-   * Cancel editing
-   */
   const handleCancelEdit = () => {
     setEditingNote(null)
     setEditForm({ title: '', content: '' })
     setSelectedCategoriesForNote([])
   }
 
-  /**
-   * Save edited note
-   */
   const handleSaveEdit = async () => {
     if (!editingNote || !editForm.title.trim() || !editForm.content.trim()) return
-
     try {
       const updatedNote = await NoteService.updateNote(editingNote.id, editForm)
-    setNotes(prevNotes =>
-      prevNotes.map(n =>
-        n.id === editingNote.id ? { ...n, ...editForm } : n
+      setNotes(prevNotes =>
+        prevNotes.map(n =>
+          n.id === editingNote.id ? { ...n, ...editForm } : n
+        )
       )
-    );
-      // Update categories if any are selected
       if (selectedCategoriesForNote.length > 0) {
         await handleAssignCategories(editingNote.id, selectedCategoriesForNote)
       }
-      // Update the note in the local state
       setNotes(prevNotes => 
         prevNotes.map(note => 
           note.id === editingNote.id 
@@ -148,123 +108,74 @@ function App() {
             : note
         )
       )
-      
       setEditingNote(null)
       setEditForm({ title: '', content: '' })
       setSelectedCategoriesForNote([])
       setError(null)
     } catch (err) {
-      setError('Error al actualizar la nota')
+      setError('Failed to update note')
       console.error(err)
     }
   }
 
-  /**
-   * Toggle archive status of a note
-   * /**
- * Toggle archive status of a note
- * @param id Note ID to toggle archive status
- */
   const handleToggleArchive = async (id: number) => {
     try {
       const updatedNote = await NoteService.toggleArchive(id)
       setError(null)
-  
-      // Si el estado de archivado cambia, filtramos esa nota de la lista
       setNotes(prevNotes =>
         prevNotes.filter(note => note.id !== id)
       )
-  
-      // Si la nota debería mostrarse en el nuevo viewMode, la agregamos
       if (
         (updatedNote.archived && viewMode === 'archived') ||
         (!updatedNote.archived && viewMode === 'active')
       ) {
         setNotes(prevNotes => [...prevNotes, updatedNote])
       }
-  
     } catch (err) {
-      setError('Error al archivar/desarchivar la nota')
+      setError('Failed to toggle archive status')
       console.error(err)
     }
   }
-  
 
-  
-
-  /**
-   * Delete a note by ID
-   * @param id Note ID to delete
-   */
   const handleDeleteNote = async (id: number) => {
     try {
       await NoteService.deleteNote(id)
       setError(null)
-      
-      // Remove the note from the local state
       setNotes(prevNotes => prevNotes.filter(note => note.id !== id))
     } catch (err) {
-      setError('Error al eliminar la nota')
+      setError('Failed to delete note')
       console.error(err)
     }
   }
 
-  /**
-   * Switch between active and archived notes view
-   * @param mode View mode to switch to
-   */
   const handleViewModeChange = (mode: 'active' | 'archived') => {
     setViewMode(mode)
   }
 
-  /**
-   * Handle category filter change
-   * @param category Category name to filter by
-   */
   const handleCategoryFilterChange = (category: string) => {
     setSelectedCategory(category)
   }
 
-  /**
-   * Handle category selection for new note
-   * @param categoryIds Array of selected category IDs
-   */
   const handleCategorySelectionChange = (categoryIds: number[]) => {
     setSelectedCategoriesForNote(categoryIds)
   }
 
-  /**
-   * Assign categories to a note
-   * @param noteId Note ID
-   * @param categoryIds Array of category IDs to assign
-   */
   const handleAssignCategories = async (noteId: number, categoryIds: number[]) => {
     try {
-      // Get current note categories
       const currentNote = notes.find(note => note.id === noteId)
       const currentCategoryIds = currentNote?.categories?.map(cat => cat.id) || []
-      
-      // Find categories to add (new ones)
       const categoriesToAdd = categoryIds.filter(id => !currentCategoryIds.includes(id))
-      
-      // Find categories to remove (old ones not in new selection)
       const categoriesToRemove = currentCategoryIds.filter(id => !categoryIds.includes(id))
-      
-      // Add new categories
+
       for (const categoryId of categoriesToAdd) {
         await NoteService.assignCategoryToNote(noteId, categoryId)
       }
-      
-      // Remove old categories
       for (const categoryId of categoriesToRemove) {
         await NoteService.removeCategoryFromNote(noteId, categoryId)
       }
-      
-      // Update the note in the local state with new categories
+
       const selectedCategories = categories.filter(cat => categoryIds.includes(cat.id))
-      
       if (currentNote) {
-        // Update existing note
         setNotes(prevNotes => 
           prevNotes.map(note => 
             note.id === noteId 
@@ -273,30 +184,21 @@ function App() {
           )
         )
       } else {
-        // Add new note with categories (for newly created notes)
         const newNote = await NoteService.getAllNotes().then(notes => notes.find(note => note.id === noteId))
         if (newNote) {
           setNotes(prevNotes => [...prevNotes, { ...newNote, categories: selectedCategories }])
         }
       }
-      
       setError(null)
     } catch (err) {
-      setError('Error al actualizar las categorías de la nota')
+      setError('Failed to update note categories')
       console.error(err)
     }
   }
 
-  /**
-   * Remove a category from a note
-   * @param noteId Note ID
-   * @param categoryId Category ID to remove
-   */
   const handleRemoveCategoryFromNote = async (noteId: number, categoryId: number) => {
     try {
       await NoteService.removeCategoryFromNote(noteId, categoryId)
-      
-      // Update the note in the local state by removing the category
       setNotes(prevNotes => 
         prevNotes.map(note => 
           note.id === noteId 
@@ -307,61 +209,51 @@ function App() {
             : note
         )
       )
-      
       setError(null)
     } catch (err) {
-      setError('Error al quitar la categoría de la nota')
+      setError('Failed to remove category from note')
       console.error(err)
     }
   }
 
-  // Show loading state
   if (loading) {
-    return <div className="app">Cargando notas...</div>
+    return <div className="app">Loading notes...</div>
   }
 
   return (
     <div className="app">
-      <h1>App de Notas</h1>
-      
-      {/* Error message display */}
+      <h1>Notes App</h1>
       {error && <div className="error">{error}</div>}
-
-      {/* View mode selector */}
       <div className="view-mode-selector">
         <button 
           onClick={() => handleViewModeChange('active')}
           className={viewMode === 'active' ? 'active' : ''}
         >
-          Notas Activas
+          Active Notes
         </button>
         <button 
           onClick={() => handleViewModeChange('archived')}
           className={viewMode === 'archived' ? 'active' : ''}
         >
-          Notas Archivadas
+          Archived Notes
         </button>
       </div>
-
-      {/* Category filter */}
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryFilterChange}
       />
-
-      {/* Note creation form */}
       <form onSubmit={handleCreateNote} className="note-form">
-        <h2>Crear Nueva Nota</h2>
+        <h2>Create New Note</h2>
         <input
           type="text"
-          placeholder="Título"
+          placeholder="Title"
           value={newNote.title}
           onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
           required
         />
         <textarea
-          placeholder="Contenido"
+          placeholder="Content"
           value={newNote.content}
           onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
           required
@@ -371,30 +263,27 @@ function App() {
           selectedCategories={selectedCategoriesForNote}
           onCategoryChange={handleCategorySelectionChange}
         />
-        <button type="submit">Crear Nota</button>
+        <button type="submit">Create Note</button>
       </form>
-
-      {/* Notes list section */}
       <div className="notes-section">
-        <h2>{viewMode === 'active' ? 'Notas Activas' : 'Notas Archivadas'} ({notes.length})</h2>
+        <h2>{viewMode === 'active' ? 'Active Notes' : 'Archived Notes'} ({notes.length})</h2>
         {notes.length === 0 ? (
-          <p>No hay {viewMode === 'active' ? 'notas activas' : 'notas archivadas'}</p>
+          <p>There are no {viewMode === 'active' ? 'active notes' : 'archived notes'}</p>
         ) : (
           <div className="notes-list">
             {notes.map(note => (
               <div key={note.id} className={`note ${note.archived ? 'archived' : ''}`}>
                 {editingNote?.id === note.id ? (
-                  // Edit mode
                   <div className="note-edit-mode">
                     <input
                       type="text"
-                      placeholder="Título"
+                      placeholder="Title"
                       value={editForm.title}
                       onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                       className="edit-title"
                     />
                     <textarea
-                      placeholder="Contenido"
+                      placeholder="Content"
                       value={editForm.content}
                       onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
                       className="edit-content"
@@ -406,40 +295,36 @@ function App() {
                     />
                     <div className="edit-actions">
                       <button onClick={handleSaveEdit} className="save-edit">
-                        Guardar
+                        Save
                       </button>
                       <button onClick={handleCancelEdit} className="cancel-edit">
-                        Cancelar
+                        Cancel
                       </button>
                     </div>
                   </div>
                 ) : (
-                  // View mode
                   <>
                     <h3>{note.title}</h3>
                     <p>{note.content}</p>
-                    {/* Category tags */}
                     <CategoryTags
                       categories={note.categories || []}
                       onRemoveCategory={(categoryId) => handleRemoveCategoryFromNote(note.id, categoryId)}
                       showRemoveButton={true}
                     />
-                    {/* Note metadata */}
                     <div className="note-meta">
                       <span>ID: {note.id}</span>
-                      <span>Archivada: {note.archived ? 'Sí' : 'No'}</span>
-                      <span>Creada: {new Date(note.createdAt).toLocaleDateString()}</span>
+                      <span>Archived: {note.archived ? 'Yes' : 'No'}</span>
+                      <span>Created: {new Date(note.createdAt).toLocaleDateString()}</span>
                     </div>
-                    {/* Note action buttons */}
                     <div className="note-actions">
                       <button onClick={() => handleStartEdit(note)} className="edit">
-                        Editar
+                        Edit
                       </button>
                       <button onClick={() => handleToggleArchive(note.id)}>
-                        {note.archived ? 'Desarchivar' : 'Archivar'}
+                        {note.archived ? 'Unarchive' : 'Archive'}
                       </button>
                       <button onClick={() => handleDeleteNote(note.id)} className="delete">
-                        Eliminar
+                        Delete
                       </button>
                     </div>
                   </>

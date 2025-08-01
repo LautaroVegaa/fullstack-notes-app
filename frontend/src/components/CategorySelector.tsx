@@ -9,6 +9,24 @@ interface CategorySelectorProps {
 }
 
 /**
+ * Translates category names from Spanish to English for display purposes
+ */
+const translateCategoryName = (name: string): string => {
+  const translations: Record<string, string> = {
+    'Trabajo': 'Work',
+    'Personal': 'Personal',
+    'Urgente': 'Urgent',
+    'Ideas': 'Ideas',
+    'Recordatorios': 'Reminders',
+    'Proyectos': 'Projects',
+    'Estudio': 'Study',
+    'Finanzas': 'Finance',
+    'Salud': 'Health',
+  };
+  return translations[name] || name;
+};
+
+/**
  * Component for selecting multiple categories for a note
  */
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -19,17 +37,17 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
 }) => {
   const handleCategoryToggle = (categoryId: number) => {
     if (disabled) return;
-    
+
     const newSelectedCategories = selectedCategories.includes(categoryId)
       ? selectedCategories.filter(id => id !== categoryId)
       : [...selectedCategories, categoryId];
-    
+
     onCategoryChange(newSelectedCategories);
   };
 
   return (
     <div className="category-selector">
-      <label>Categorías:</label>
+      <label>Categories:</label>
       <div className="category-checkboxes">
         {categories.map((category) => (
           <label key={category.id} className="category-checkbox">
@@ -39,10 +57,10 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
               onChange={() => handleCategoryToggle(category.id)}
               disabled={disabled}
             />
-            <span>{category.name}</span>
+            <span>{translateCategoryName(category.name)}</span>
           </label>
         ))}
       </div>
     </div>
   );
-}; 
+};
