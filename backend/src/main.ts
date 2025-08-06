@@ -6,7 +6,7 @@ async function bootstrap() {
   
   // Configurar CORS para permitir peticiones desde el frontend
   app.enableCors({
-    origin: 'http://localhost:5173', // Puerto por defecto de Vite
+    origin: ['http://localhost:5173', 'https://tu-usuario.github.io'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
